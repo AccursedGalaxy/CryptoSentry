@@ -178,20 +178,20 @@ async def generate_dca_response():
 
 
 
-@bot.slash_command()
+@bot.slash_command(description="Get coins that are near a level.")
 async def dca(ctx):
     response = await generate_dca_response()
     embed = disnake.Embed(title="Levels Update", description=response, color=disnake.Color.blue())
     await ctx.response.send_message(embed=embed)
 
 
-@bot.slash_command()
+@bot.slash_command(description="Ping the bot for latency.")
 async def ping(ctx):
 # pong back with the latency
     await ctx.response.send_message(f'Pong! {round(bot.latency * 1000)}ms')
 
 
-@bot.slash_command()
+@bot.slash_command(description="Set the channel for signals.")
 async def set_channel(ctx, channel: disnake.TextChannel):
     if ctx.author.id == 883830567219642449:
         with open('channel.json', 'w') as f:
