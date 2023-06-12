@@ -76,7 +76,8 @@ async def send_signals():
             coin, signal = lines[i].split(' Hit a ')
             # If the signal is different from the last one, send it
             if last_signals.get(coin) != signal:
-                await channel.send(lines[i])
+                embed = disnake.Embed(title=f"{coin} Signal", description=lines[i], color=disnake.Color.green())
+                await channel.send(embed=embed)
                 # Update the last signal
                 last_signals[coin] = signal
 
@@ -123,7 +124,6 @@ def check_levels(coin, levels, price):
 
 async def generate_dca_response():
     """Generate the DCA response."""
-    response = "Here is your Levels Update:\n\n"
     logger.info("Generating DCA response")
 
     # Initialize dictionaries to store coins that hit each level
@@ -149,23 +149,23 @@ async def generate_dca_response():
                             bullrun_hits[coin] = result['BullRunTarget']
 
                 else:
-                    response += f"Could not fetch price for {coin}.\n"
+                    response = f"Could not fetch price for {coin}.\n"
 
         # Add DCA hits to the response
         if dca_hits:
-            response += "DCA Targets Hit On These Coins:\n"
+            response = "**DCA Targets Hit On These Coins:**\n"
             for coin, info in dca_hits.items():
                 response += f"{coin} Hit a DCA Level: {info}\n"
 
         # Add Target hits to the response
         if target_hits:
-            response += "\nProfit Target Hit On These Coins:\n"
+            response = "\nProfit Target Hit On These Coins:\n"
             for coin, info in target_hits.items():
                 response += f"{coin} Hit a Target Level: {info}\n"
 
         # Add BullRunTarget hits to the response
         if bullrun_hits:
-            response += "\nBull Run Target Hit On These Coins:\n"
+            response = "\nBull Run Target Hit On These Coins:\n"
             for coin, info in bullrun_hits.items():
                 response += f"{coin} Hit a Bull Run Target Level: {info}\n"
 
@@ -181,7 +181,8 @@ async def generate_dca_response():
 @bot.slash_command()
 async def dca(ctx):
     response = await generate_dca_response()
-    await ctx.response.send_message(response)
+    embed = disnake.Embed(title="Levels Update", description=response, color=disnake.Color.blue())
+    await ctx.response.send_message(embed=embed)
 
 
 @bot.slash_command()
