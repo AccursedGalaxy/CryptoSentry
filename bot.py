@@ -5,16 +5,26 @@ import json
 import requests
 from disnake.ext import tasks
 
-from config.settings import TOKEN, CMC_API_KEY
+from config.settings import TOKEN, CMC_API_KEY, TEST_GUILD_IDS
 from config.setup import coins, near_percentage
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Create logger
+logger = logging.getLogger('dca-bot')
+# Create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# Add formatter to ch
+ch.setFormatter(formatter)
+# Add ch to logger
+logger.addHandler(ch)
+
 
 command_sync_flags = commands.CommandSyncFlags.default()
 command_sync_flags.sync_commands_debug = True
 
-bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=[828196327502512128])
+bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=TEST_GUILD_IDS, command_sync_flags=command_sync_flags)
 
 channel_id = "1020255049911390219"
 
@@ -24,7 +34,7 @@ last_signals = {}
 @bot.event
 async def on_ready():
     global channel_id
-    print(f'We have logged in as {bot.user}')
+    logger.info(f'We have logged in as {bot.user}')
     # Load channel_id from JSON file
     with open('channel.json', 'r') as f:
         channel_id = json.load(f)['channel_id']
@@ -33,7 +43,7 @@ async def on_ready():
 
 @bot.event
 async def on_guild_join(guild):
-    print(f'Joined {guild.name} ({guild.id})')
+    logger.info(f'Joined {guild.name} ({guild.id})')
     await guild.system_channel.send("Hello! I'm a bot that can help you with your DCA levels.")
     await guild.system_channel.send("To get started, type `!setchannel <channel_id>` to set the channel for signals.")
 
@@ -76,12 +86,19 @@ async def send_signals():
                 coin, signal = lines[i].split(' Hit a ')
                 # If the signal is different from the last one, send it
                 if last_signals.get(coin) != signal:
-                    await channel.send(lines[i])
+                    # Create an embed message
+                    embed = disnake.Embed(
+                        title=f"Signal for {coin}",
+                        description=f"{coin} has hit a {signal}",
+                        color=disnake.Color.green() if 'DCA Level' in signal else disnake.Color.red()
+                    )
+                    await channel.send(embed=embed)
                     # Update the last signal
                     last_signals[coin] = signal
 
+
 # Create a background task that runs every 15 minutes
-@tasks.loop(minutes=15)
+@tasks.loop(minutes=2)
 async def signal_task():
     await send_signals()
 
