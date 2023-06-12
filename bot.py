@@ -2,39 +2,39 @@ import disnake
 from disnake.ext import commands
 import logging
 import json
+import requests
 import os
 import importlib
 from disnake.ext import tasks
 
-from config.settings import TOKEN
+from config.settings import TOKEN, CMC_API_KEY
+from config.setup import coins, near_percentage
 
 logger = logging.getLogger('disnake')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='disnake.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-
-from disnake.ext import commands
 
 command_sync_flags = commands.CommandSyncFlags.default()
 command_sync_flags.sync_commands_debug = True
 
 bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=[1087088370250948744])
 
-command_modules = {}
+channel_id = None
 
-
-command_modules['dca'] = importlib.import_module('commands.dca')
-
-for filename in os.listdir('./commands'):
-    if filename.endswith('.py'):
-        command_modules[filename[:-3]] = importlib.import_module(f'commands.{filename[:-3]}')
-
+last_signals = {}
 
 
 @bot.event
 async def on_ready():
+    global channel_id
     print(f'We have logged in as {bot.user}')
+    # Load channel_id from JSON file
+    with open('channel.json', 'r') as f:
+        channel_id = json.load(f)['channel_id']
+    # Start the background task
+    signal_task.start()
 
 @bot.event
 async def on_guild_join(guild):
@@ -55,72 +55,154 @@ async def on_command_error(ctx, error):
         ))
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"{ctx.author.mention} This command is on cooldown. Please try again in {error.retry_after:.2f}s.")
+    elif isinstance(error, commands.CommandInvokeError):
+        await ctx.send(f"{ctx.author.mention} An error occurred while invoking the command. Please try again later.")
     elif isinstance(error, commands.CommandNotFound):
-
-        # If the command is not found, do nothing
         pass
     else:
         await ctx.send(f"{ctx.author.mention} An error occurred while processing the command. Please try again later.")
 
 
-@bot.slash_command()
-async def ping(ctx):
-    await ctx.response.send_message('Pong!')
+async def send_signals():
+    global last_signals
+    # Get the channel
+    channel = bot.get_channel(channel_id)
+    # Generate the DCA response
+    response = await generate_dca_response()
+    # Split the response into lines
+    lines = response.split('\n')
+    # Iterate over the lines
+    for i in range(2, len(lines)):
+        # Check if ' Hit a ' is in the line
+        if ' Hit a ' in lines[i]:
+            # Get the coin and the signal
+            coin, signal = lines[i].split(' Hit a ')
+            # If the signal is different from the last one, send it
+            if last_signals.get(coin) != signal:
+                await channel.send(lines[i])
+                # Update the last signal
+                last_signals[coin] = signal
 
-# get channel id from user input and write to channel.json
-@bot.slash_command()
-async def set_channel(ctx, channel_id: int):
-    if ctx.author.id == 883830567219642449:
-        with open('channel.json', 'w') as f:
-            json.dump({'channel_id': channel_id}, f)
-        await ctx.response.send_message(f"Channel set to {channel_id}.")
-    else:
-        await ctx.response.send_message(f"{ctx.author.mention} You don't have permission to use this command.")
+# Create a background task that runs every 15 minutes
+@tasks.loop(minutes=15)
+async def signal_task():
+    await send_signals()
+
+
+
+
+def fetch_prices(coins):
+    """Fetch the prices for multiple coins from CoinMarketCap."""
+    url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+    headers = {
+        "Accepts": "application/json",
+        "X-CMC_PRO_API_KEY": CMC_API_KEY,
+    }
+    parameters = {
+        "symbol": ','.join(coins),
+        "convert": "USD"
+    }
+    try:
+        response = requests.get(url, headers=headers, params=parameters)
+        data = response.json()['data']
+        prices = {coin: float(data[coin]['quote']['USD']['price']) for coin in coins}
+        logger.info(f"Prices: {prices}")
+        return prices
+    except Exception as e:
+        logger.error(f"Could not fetch prices: {e}")
+        return None
+
+
+def check_levels(coin, levels, price):
+    """Check if the price is near a DCA or profit level."""
+    logger.info(f"Checking levels for {coin} at {price}")
+    level_hits = {}
+    for level_type, level_values in levels.items():
+        for level in level_values:
+            if (1 - near_percentage) * level <= price <= (1 + near_percentage) * level:
+                level_hits[level_type] = level
+    return level_hits if level_hits else None
+
+
+async def generate_dca_response():
+    """Generate the DCA response."""
+    response = "Here is your Levels Update:\n\n"
+    logger.info("Generating DCA response")
+
+    # Initialize dictionaries to store coins that hit each level
+    dca_hits = {}
+    target_hits = {}
+    bullrun_hits = {}
+
+    try:
+        prices = fetch_prices(coins.keys())
+        if prices is not None:
+            for coin, levels in coins.items():
+                price = prices.get(coin)
+                if price is not None:
+                    result = check_levels(coin, levels, price)
+
+                    # Check which level was hit and add to the appropriate dictionary
+                    if result:
+                        if 'DCA' in result:
+                            dca_hits[coin] = result['DCA']
+                        if 'Target' in result:
+                            target_hits[coin] = result['Target']
+                        if 'BullRunTarget' in result:
+                            bullrun_hits[coin] = result['BullRunTarget']
+
+                else:
+                    response += f"Could not fetch price for {coin}.\n"
+
+        # Add DCA hits to the response
+        if dca_hits:
+            response += "DCA Targets Hit On These Coins:\n"
+            for coin, info in dca_hits.items():
+                response += f"{coin} Hit a DCA Level: {info}\n"
+
+        # Add Target hits to the response
+        if target_hits:
+            response += "\nProfit Target Hit On These Coins:\n"
+            for coin, info in target_hits.items():
+                response += f"{coin} Hit a Target Level: {info}\n"
+
+        # Add BullRunTarget hits to the response
+        if bullrun_hits:
+            response += "\nBull Run Target Hit On These Coins:\n"
+            for coin, info in bullrun_hits.items():
+                response += f"{coin} Hit a Bull Run Target Level: {info}\n"
+
+        return response
+    except Exception as e:
+        logger.error(f"Could not generate DCA response: {info}\n")
+        return None
+
+
+
 
 
 @bot.slash_command()
 async def dca(ctx):
-    await ctx.response.send_message("Checking DCA levels...")
-    await check_dca_levels(bot)
+    response = await generate_dca_response()
+    await ctx.response.send_message(response)
 
-@tasks.loop(minutes=5) # one minute for testing
-async def check_dca_levels(client):
-    response = await command_modules['dca'].generate_dca_response()
 
-    # try to read the old response, handle the case where the file doesn't exist or is empty
-    try:
-        with open('dca_response.json', 'r') as f:
-            old_response = f.read()
-    except (FileNotFoundError, IOError):
-        old_response = ""
-        logging.info("No previous response found.")
+@bot.slash_command()
+async def ping(ctx):
+# pong back with the latency
+    await ctx.response.send_message(f'Pong! {round(bot.latency * 1000)}ms')
 
-    # write the new response to the file
-    with open('dca_response.json', 'w') as f:
-        f.write(response)
 
-    # send only unique lines of the response to the channel
-    new_lines = [line for line in response.split('\n') if line and line not in old_response.split('\n')]
-    if new_lines:
-        logging.info(f"New lines found: {new_lines}")
-        # get channel id from channel.json
-        try:
-            with open('channel.json', 'r') as f:
-                channel_id = json.load(f)['channel_id']
-        except (FileNotFoundError, IOError, KeyError):
-            logging.error("Failed to get channel ID.")
-            return
-        channel = client.get_channel(int(channel_id))
-        if channel is not None:
-            embed = discord.Embed(title="New Levels:", description="\n".join(new_lines), color=0x00ff00)
-            await channel.send(embed=embed)
+@bot.slash_command()
+async def set_channel(ctx, channel: disnake.TextChannel):
+    if ctx.author.id == 883830567219642449:
+        with open('channel.json', 'w') as f:
+            json.dump({'channel_id': channel.id}, f)
+        await ctx.response.send_message(f"Channel set to {channel.id}.")
+        # send message to specified channel in json file to confirm that it is set
+        await channel.send("This channel is now set for signals!")
     else:
-        logging.info(f"No new lines found in response.")
-
-    logging.info("Finished checking DCA levels.")
-
-
-
+        await ctx.response.send_message(f"{ctx.author.mention} You don't have permission to use this command.")
 
 
 bot.run(TOKEN)

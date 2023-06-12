@@ -13,8 +13,6 @@ logging.basicConfig(level=logging.INFO)
 logging.getLogger('discord').setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-
-
 def fetch_prices(coins):
     """Fetch the prices for multiple coins from CoinMarketCap."""
     url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
@@ -36,7 +34,6 @@ def fetch_prices(coins):
         logger.error(f"Could not fetch prices: {e}")
         return None
 
-
 def check_levels(coin, levels, price):
     """Check if the price is near a DCA or profit level."""
     logger.info(f"Checking levels for {coin} at {price}")
@@ -47,8 +44,7 @@ def check_levels(coin, levels, price):
                 level_hits[level_type] = level
     return level_hits if level_hits else None
 
-
-async def generate_dca_response():
+def generate_dca_response():
     """Generate the DCA response."""
     response = "Here is your Levels Update:\n\n"
     logger.info("Generating DCA response")
@@ -98,11 +94,10 @@ async def generate_dca_response():
 
         return response
     except Exception as e:
-        logger.error(f"Could not generate DCA response: {info}\n")
+        logger.error(f"Could not generate DCA response: {e}")
         return None
 
-
 async def execute(message, user_message):
-    response = await generate_dca_response()
+    response = generate_dca_response()
     await message.channel.send(response)
 
