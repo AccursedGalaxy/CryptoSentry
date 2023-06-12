@@ -62,22 +62,23 @@ async def send_signals():
     global last_signals
     # Get the channel
     channel = bot.get_channel(channel_id)
-    # Generate the DCA response
-    response = await generate_dca_response()
-    # Split the response into lines
-    lines = response.split('\n')
-    # Iterate over the lines
-    for i in range(2, len(lines)):
-        # Check if ' Hit a ' is in the line
-        if ' Hit a ' in lines[i]:
-            # Get the coin and the signal
-            coin, signal = lines[i].split(' Hit a ')
-            # If the signal is different from the last one, send it
-            if last_signals.get(coin) != signal:
-                embed = disnake.Embed(title=f"{coin} Signal", description=lines[i], color=disnake.Color.green())
-                await channel.send(embed=embed)
-                # Update the last signal
-                last_signals[coin] = signal
+    # Only send signals if the channel_id is set and the channel exists
+    if channel_id is not None and channel is not None:
+        # Generate the DCA response
+        response = await generate_dca_response()
+        # Split the response into lines
+        lines = response.split('\n')
+        # Iterate over the lines
+        for i in range(2, len(lines)):
+            # Check if ' Hit a ' is in the line
+            if ' Hit a ' in lines[i]:
+                # Get the coin and the signal
+                coin, signal = lines[i].split(' Hit a ')
+                # If the signal is different from the last one, send it
+                if last_signals.get(coin) != signal:
+                    await channel.send(lines[i])
+                    # Update the last signal
+                    last_signals[coin] = signal
 
 # Create a background task that runs every 15 minutes
 @tasks.loop(minutes=15)
