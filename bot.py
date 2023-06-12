@@ -241,6 +241,10 @@ async def set_channel(ctx: disnake.ApplicationCommandInteraction, channel: disna
     await ctx.edit_original_message(content=f"Channel set to {channel.id}.")
     # Send a test message to the specified channel
     await channel.send("Channel set.")
+    # Start the signal_task if it's not already running
+    if not signal_task.is_running():
+        signal_task.start()
+
 
 
 bot.run(TOKEN)
