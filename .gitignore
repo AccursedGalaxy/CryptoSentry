@@ -6,5 +6,7 @@
 # ignore python cache files
 __pycache__/
 
+# ignore all log files
+*.log
 
 ```
