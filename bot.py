@@ -10,11 +10,8 @@ from disnake.ext import tasks
 from config.settings import TOKEN, CMC_API_KEY
 from config.setup import coins, near_percentage
 
-logger = logging.getLogger('disnake')
-logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='disnake.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 command_sync_flags = commands.CommandSyncFlags.default()
 command_sync_flags.sync_commands_debug = True
