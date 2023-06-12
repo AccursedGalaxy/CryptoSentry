@@ -245,7 +245,5 @@ async def set_channel(ctx: disnake.ApplicationCommandInteraction, channel: disna
     if not signal_task.is_running():
         signal_task.start()
 
-
-
 bot.run(TOKEN)
 
