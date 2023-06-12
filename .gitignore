@@ -1,3 +1,8 @@
 .venv
 .env
+
+# ignore python cache files
+__pycache__/
+
+
 ```
