@@ -3,8 +3,6 @@ from disnake.ext import commands
 import logging
 import json
 import requests
-import os
-import importlib
 from disnake.ext import tasks
 
 from config.settings import TOKEN, CMC_API_KEY
@@ -18,7 +16,7 @@ command_sync_flags.sync_commands_debug = True
 
 bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=[1087088370250948744])
 
-channel_id = None
+channel_id = "1020255049911390219"
 
 last_signals = {}
 
