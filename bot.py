@@ -26,7 +26,7 @@ command_sync_flags.sync_commands_debug = True
 
 bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=TEST_GUILD_IDS, command_sync_flags=command_sync_flags)
 
-channel_id = "1020255049911390219"
+channel_id = None
 
 last_signals = {}
 
