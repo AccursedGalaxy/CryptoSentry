@@ -229,7 +229,7 @@ async def ping(ctx):
 
 
 
-@bot.slash_command(description="Set the channel for the bot to send messages in.")
+@bot.slash_command(description="Set the channel for the signals.")
 async def set_channel(ctx: disnake.ApplicationCommandInteraction, channel: disnake.TextChannel):
     # Defer the response as soon as possible
     await ctx.response.defer()
@@ -244,6 +244,14 @@ async def set_channel(ctx: disnake.ApplicationCommandInteraction, channel: disna
     # Start the signal_task if it's not already running
     if not signal_task.is_running():
         signal_task.start()
+
+@bot.slash_command(description="view the current channel setup for signals")
+async def view_channel(ctx: disnake.ApplicationCommandInteraction):
+    # Defer the response as soon as possible
+    await ctx.response.defer()
+    # Then do the slow operations
+    global channel_id
+    await ctx.edit_original_message(content=f"Channel set to {channel_id}.")
 
 bot.run(TOKEN)
 
