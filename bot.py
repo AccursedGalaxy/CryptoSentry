@@ -5,7 +5,7 @@ import json
 import requests
 from disnake.ext import tasks
 
-from config.settings import TOKEN, CMC_API_KEY, TEST_GUILD_IDS
+from config.settings import TOKEN, CMC_API_KEY, TEST_GUILD_IDS, SIGNAL_CHANNEL_ID
 from config.setup import coins, near_percentage
 
 # Create logger
@@ -26,7 +26,7 @@ command_sync_flags.sync_commands_debug = True
 
 bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=TEST_GUILD_IDS, command_sync_flags=command_sync_flags)
 
-channel_id = None
+channel_id = SIGNAL_CHANNEL_ID
 
 last_signals = {}
 
@@ -34,12 +34,28 @@ last_signals = {}
 @bot.event
 async def on_ready():
     global channel_id
-    logger.info(f'We have logged in as {bot.user}')
+    print(f'We have logged in as {bot.user}')
     # Load channel_id from JSON file
-    with open('channel.json', 'r') as f:
-        channel_id = json.load(f)['channel_id']
-    # Start the background task
-    signal_task.start()
+    try:
+        with open('channel.json', 'r') as f:
+            data = f.read()
+            if data:
+                data_json = json.loads(data)
+                channel_id = data_json.get('channel_id', None)
+            else:
+                channel_id = None
+    except FileNotFoundError:
+        channel_id = None
+    # Start the background task only if the channel_id is set and the channel exists in the guild
+    if channel_id is not None:
+        channel = bot.get_channel(channel_id)
+        if channel is not None:
+            # Check if the task is running before trying to start it
+            if not signal_task.is_running():
+                signal_task.start()
+
+
+
 
 @bot.event
 async def on_guild_join(guild):
@@ -196,9 +212,14 @@ async def generate_dca_response():
 
 @bot.slash_command(description="Get coins that are near a level.")
 async def dca(ctx):
+    # Defer the response as soon as possible
+    await ctx.response.defer()
+    # Then do the slow operations
     response = await generate_dca_response()
     embed = disnake.Embed(title="Levels Update", description=response, color=disnake.Color.blue())
-    await ctx.response.send_message(embed=embed)
+    # Edit the deferred response
+    await ctx.edit_original_message(embed=embed)
+
 
 
 @bot.slash_command(description="Ping the bot for latency.")
@@ -207,16 +228,18 @@ async def ping(ctx):
     await ctx.response.send_message(f'Pong! {round(bot.latency * 1000)}ms')
 
 
-@bot.slash_command(description="Set the channel for signals.")
-async def set_channel(ctx, channel: disnake.TextChannel):
-    if ctx.author.id == 883830567219642449:
-        with open('channel.json', 'w') as f:
-            json.dump({'channel_id': channel.id}, f)
-        await ctx.response.send_message(f"Channel set to {channel.id}.")
-        # send message to specified channel in json file to confirm that it is set
-        await channel.send("This channel is now set for signals!")
-    else:
-        await ctx.response.send_message(f"{ctx.author.mention} You don't have permission to use this command.")
+@bot.slash_command(description="Set the channel for the bot to send messages in.")
+async def set_channel(ctx: disnake.ApplicationCommandInteraction, channel: disnake.TextChannel):
+    # Defer the response as soon as possible
+    await ctx.response.defer()
+    # Then do the slow operations
+    global channel_id
+    channel_id = channel.id
+    with open('channel.json', 'w') as f:
+        json.dump({'channel_id': channel_id}, f)
+    await ctx.edit_original_message(content=f"Channel set to {channel.id}.")
+    # Send a test message to the specified channel
+    await channel.send("Channel set.")
 
 
 bot.run(TOKEN)
