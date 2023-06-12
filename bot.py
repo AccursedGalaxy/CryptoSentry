@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 command_sync_flags = commands.CommandSyncFlags.default()
 command_sync_flags.sync_commands_debug = True
 
-bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=[1087088370250948744])
+bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents.all(), test_guilds=[828196327502512128])
 
 channel_id = "1020255049911390219"
 
