@@ -228,6 +228,7 @@ async def ping(ctx):
     await ctx.response.send_message(f'Pong! {round(bot.latency * 1000)}ms')
 
 
+
 @bot.slash_command(description="Set the channel for the bot to send messages in.")
 async def set_channel(ctx: disnake.ApplicationCommandInteraction, channel: disnake.TextChannel):
     # Defer the response as soon as possible
