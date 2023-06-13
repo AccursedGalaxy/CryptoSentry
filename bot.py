@@ -114,7 +114,7 @@ async def send_signals():
 
 
 # Create a background task that runs every 15 minutes
-@tasks.loop(minutes=2)
+@tasks.loop(minutes=15)
 async def signal_task():
     await send_signals()
 
