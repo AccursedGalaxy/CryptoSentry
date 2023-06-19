@@ -29,7 +29,7 @@ bot.load_extension("cogs.dca")
 bot.load_extension("cogs.setchannel")
 bot.load_extension("cogs.stats")
 bot.load_extension("cogs.ideas")
-bot.load_extension("cogs.createembed")
+bot.load_extension("cogs.embed")
 
 
 @bot.event
