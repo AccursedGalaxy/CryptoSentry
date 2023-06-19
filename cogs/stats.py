@@ -53,8 +53,8 @@ class InfoCog(commands.Cog):
         **Total Market Cap:** ${total_market_cap}
         **Total 24h Volume:** ${total_24h_volume}
         **BTC Dominance:** {btc_dominance}%
-        **Best Coins:** {best_coins}
-        **Newest Coins:** {newest_coins}
+        **Best Coins:**\n {best_coins}
+        **Newest Coins:**\n {newest_coins}
         """
         return response
 
