@@ -83,3 +83,7 @@ class ViewEmbedCog(commands.Cog):
 
 def setup(bot):
     bot.add_cog(CreateEmbedCog(bot))
+    bot.add_cog(EditEmbedCog(bot))
+    bot.add_cog(DeleteEmbedCog(bot))
+    bot.add_cog(ViewEmbedCog(bot))
+
