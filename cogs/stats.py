@@ -51,8 +51,8 @@ class InfoCog(commands.Cog):
         **Total Markets:** {total_markets}
         **Total Exchanges:** {total_exchanges}
         **Total Market Cap:** ${total_market_cap}
-        **Total 24h Volume:** ${total_24h_volume}
-        **BTC Dominance:** {btc_dominance}%
+        **Total 24h Volume:** ${total_24h_volume}\n
+        **BTC Dominance:** {btc_dominance}%\n
         **Best Coins:**\n {best_coins}
         **Newest Coins:**\n {newest_coins}
         """
