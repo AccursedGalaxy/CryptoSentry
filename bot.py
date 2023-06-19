@@ -28,6 +28,7 @@ bot = commands.Bot(command_prefix='!', help_command=None,intents=disnake.Intents
 bot.load_extension("cogs.dca")
 bot.load_extension("cogs.setchannel")
 bot.load_extension("cogs.stats")
+bot.load_extension("cogs.ideas")
 
 @bot.event
 async def on_ready():
