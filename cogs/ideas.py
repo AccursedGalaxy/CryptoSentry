@@ -2,6 +2,7 @@ import requests
 import json
 import disnake
 from disnake.ext import commands
+from config.settings import X_RAPIDAPI_KEY
 
 
 class TradingViewCog(commands.Cog):
@@ -13,7 +14,7 @@ class TradingViewCog(commands.Cog):
         url = "https://trading-view.p.rapidapi.com/ideas/list"
         querystring = {"page":"1","per_page":"5","category":"popular","sort":"latest_popular","market":"bitcoin","stock_country":"us","locale":"en"}
         headers = {
-            "X-RapidAPI-Key": "d272cbb83emshafd80a0ad2aebbfp1e6fa8jsne11ab7615f57",
+            "X-RapidAPI-Key": "X_RAPIDAPI_KEY",
             "X-RapidAPI-Host": "trading-view.p.rapidapi.com"
         }
         response = requests.get(url, headers=headers, params=querystring)
@@ -28,4 +29,3 @@ class TradingViewCog(commands.Cog):
 
 def setup(bot):
     bot.add_cog(TradingViewCog(bot))
-
