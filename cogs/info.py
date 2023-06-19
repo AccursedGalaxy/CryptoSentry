@@ -10,24 +10,19 @@ class InfoCog(commands.Cog):
 
     @commands.slash_command(description="Get detailed information about a specific cryptocurrency.")
     async def info(self, inter: disnake.ApplicationCommandInteraction, coin_name: str):
-        coin_id = self.fetch_coin_id(coin_name)
-        if coin_id is None:
+        coin_info = self.fetch_coin_info(coin_name)
+        if coin_info is None:
             await inter.response.send_message(f"Could not find a cryptocurrency with the name {coin_name}.")
             return
 
-        coin_info = self.fetch_coin_info(coin_id)
-        if coin_info is None:
-            await inter.response.send_message(f"Could not fetch information for the cryptocurrency {coin_name}.")
-            return
-
         # Format and send the information as a message
-        info_message = self.format_info_message(coin_info)
-        await inter.response.send_message(info_message)
+        embed = self.format_info_message(coin_info)
+        await inter.response.send_message(embed=embed)
 
-    def fetch_coin_id(self, coin_name):
+    def fetch_coin_info(self, coin_name):
         url = "https://coinranking1.p.rapidapi.com/coins"
         headers = {
-            "X-RapidAPI-Key": "X_RAPIDAPI_KEY",
+            "X-RapidAPI-Key": X_RAPIDAPI_KEY,
             "X-RapidAPI-Host": "coinranking1.p.rapidapi.com"
         }
         response = requests.get(url, headers=headers)
@@ -37,33 +32,22 @@ class InfoCog(commands.Cog):
         coins = response.json()["data"]["coins"]
         for coin in coins:
             if coin["name"].lower() == coin_name.lower():
-                return coin["uuid"]
+                return coin
 
         return None
 
-    def fetch_coin_info(self, coin_id):
-        url = f"https://coinranking1.p.rapidapi.com/coin/{coin_id}"
-        headers = {
-            "X-RapidAPI-Key": "X_RAPIDAPI_KEY",
-            "X-RapidAPI-Host": "coinranking1.p.rapidapi.com"
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            return None
-
-        return response.json()["data"]["coin"]
-
     def format_info_message(self, coin_info):
-        # Format the information about the coin into a string
-        info_message = f"**{coin_info['name']} ({coin_info['symbol']})**\n"
-        info_message += f"Description: {coin_info['description']}\n"
-        info_message += f"Price: {coin_info['price']}\n"
-        info_message += f"Market Cap: {coin_info['marketCap']}\n"
-        info_message += f"24h Volume: {coin_info['24hVolume']}\n"
-        info_message += f"Change (24h): {coin_info['change']}%\n"
-        info_message += f"Rank: {coin_info['rank']}\n"
-        info_message += f"Website: {coin_info['websiteUrl']}\n"
-        return info_message
+        # Format the information about the coin into an embed
+        embed = disnake.Embed(title=f"{coin_info['name']} ({coin_info['symbol']})", color=0x3498db)
+        embed.description = coin_info['description']
+        embed.add_field(name="Price", value=coin_info['price'], inline=True)
+        embed.add_field(name="Market Cap", value=coin_info['marketCap'], inline=True)
+        embed.add_field(name="24h Volume", value=coin_info['24hVolume'], inline=True)
+        embed.add_field(name="Change (24h)", value=f"{coin_info['change']}%", inline=True)
+        embed.add_field(name="Rank", value=coin_info['rank'], inline=True)
+        embed.add_field(name="Website", value=coin_info['websiteUrl'], inline=True)
+        embed.set_thumbnail(url=coin_info['iconUrl'])
+        return embed
 
 def setup(bot):
     bot.add_cog(InfoCog(bot))
