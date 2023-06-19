@@ -1,6 +1,8 @@
-import discord
-from discord.ext import commands
 import requests
+import json
+import disnake
+from disnake.ext import commands
+
 
 class TradingViewCog(commands.Cog):
     def __init__(self, bot):
@@ -17,7 +19,7 @@ class TradingViewCog(commands.Cog):
         response = requests.get(url, headers=headers, params=querystring)
         data = response.json()
 
-        embed = discord.Embed(title="Latest Popular Bitcoin Trading Ideas", description="Here are the latest popular ideas for Bitcoin trading from TradingView:", color=0x3498db)
+        embed = disnake.Embed(title="Latest Popular Bitcoin Trading Ideas", description="Here are the latest popular ideas for Bitcoin trading from TradingView:", color=0x3498db)
 
         for idea in data['results']:
             embed.add_field(name=idea['name'], value=f"[Read More]({idea['chart_url']})", inline=False)
