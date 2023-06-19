@@ -2,6 +2,7 @@
 .env
 .log
 
+script.py
 
 # ignore python cache files
 __pycache__/
