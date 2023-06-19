@@ -30,7 +30,34 @@ class InfoCog(commands.Cog):
         response = requests.get(url, headers=headers, params=querystring)
         data = response.json()['data']
         # send as embed
-        return f"Total Coins: {data['totalCoins']}\nTotal Markets: {data['totalMarkets']}\nTotal Exchanges: {data['totalExchanges']}\nTotal Market Cap: {data['totalMarketCap']}\nTotal 24h Volume: {data['total24hVolume']}\nBTC Dominance: {data['btcDominance']}"
+        # format numbers with commas and decimals
+        total_coins = "{:,}".format(data['totalCoins'])
+        total_markets = "{:,}".format(data['totalMarkets'])
+        total_exchanges = "{:,}".format(data['totalExchanges'])
+        total_market_cap = "{:,}".format(int(data['totalMarketCap']))
+        total_24h_volume = "{:,}".format(int(data['total24hVolume']))
+        btc_dominance = "{:.2f}".format(data['btcDominance'])
+        # format best coins
+        best_coins = ""
+        for coin in data['bestCoins']:
+            best_coins += f"{coin['name']} ({coin['symbol']})\n"
+        # format newest coins
+        newest_coins = ""
+        for coin in data['newestCoins']:
+            newest_coins += f"{coin['name']} ({coin['symbol']})\n"
+        # format response
+        response = f"""
+        **Total Coins:** {total_coins}
+        **Total Markets:** {total_markets}
+        **Total Exchanges:** {total_exchanges}
+        **Total Market Cap:** ${total_market_cap}
+        **Total 24h Volume:** ${total_24h_volume}
+        **BTC Dominance:** {btc_dominance}%
+        **Best Coins:** {best_coins}
+        **Newest Coins:** {newest_coins}
+        """
+        return response
+
 
 
 def setup(bot):
