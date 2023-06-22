@@ -4,18 +4,23 @@ import requests
 from disnake.ext import commands, tasks
 from config.settings import CMC_API_KEY
 from config.setup import coins, near_percentage
+import os  # Added for environment variable usage
 
 
 class DCACog(commands.Cog):
+    """A cog that handles DCA signals."""
+
     def __init__(self, bot):
         self.bot = bot
         self.last_signals = {}
 
     @tasks.loop(minutes=15)
     async def signal_task(self):
+        """A task that runs every 15 minutes to send signals."""
         await self.send_signals()
 
     async def send_signals(self):
+        """Send signals if the channel_id is set and the channel exists."""
         # Get the channel
         channel = self.bot.get_channel(self.bot.channel_id)
         # Only send signals if the channel_id is set and the channel exists
@@ -46,6 +51,7 @@ class DCACog(commands.Cog):
 
     @commands.slash_command(description="Get coins that are near a level.")
     async def dca(self, ctx):
+        """Handle the '/dca' command."""
         # Defer the response as soon as possible
         await ctx.response.defer()
         # Then do the slow operations
@@ -61,7 +67,7 @@ class DCACog(commands.Cog):
         url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
         headers = {
             "Accepts": "application/json",
-            "X-CMC_PRO_API_KEY": CMC_API_KEY,
+            "X-CMC_PRO_API_KEY": os.getenv("CMC_API_KEY"),  # Use environment variable
         }
         parameters = {"symbol": ",".join(coins), "convert": "USD"}
         try:
@@ -71,7 +77,8 @@ class DCACog(commands.Cog):
                 coin: float(data[coin]["quote"]["USD"]["price"]) for coin in coins
             }
             return prices
-        except Exception as e:
+        except requests.exceptions.RequestException as e:  # More specific exception
+            print(f"Error occurred: {e}")
             return None
 
     def check_levels(self, coin, levels, price):
@@ -132,8 +139,10 @@ class DCACog(commands.Cog):
 
             return response
         except Exception as e:
+            print(f"Error occurred: {e}")  # Print the error message
             return None
 
 
 def setup(bot):
+    """Add the DCACog to the bot."""
     bot.add_cog(DCACog(bot))

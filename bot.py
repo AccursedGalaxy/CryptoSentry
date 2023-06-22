@@ -40,7 +40,7 @@ bot.load_extension("cogs.help")
 @bot.event
 async def on_ready():
     await bot.change_presence(
-        status=disnake.Status.online, activity=disnake.Game(name="Calculating Crypto")
+        status=disnake.Status.online, activity=disnake.Game(name="Crypto Stalker")
     )
     print(f"We have logged in as {bot.user}")
 
