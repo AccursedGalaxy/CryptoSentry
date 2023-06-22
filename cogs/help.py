@@ -10,7 +10,7 @@ class Help(commands.Cog):
     async def help(self, ctx):
         embed = disnake.Embed(
             title="Help",
-            description="Commands for the bot. You can use commands by typing / followed by the comamnd.",
+            description="You can use commands by typing / followed by the comamnd.",
             color=disnake.Color.blue(),
         )
         embed.add_field(
