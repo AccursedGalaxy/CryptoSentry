@@ -5,6 +5,7 @@ from disnake.ext import commands, tasks
 from config.settings import CMC_API_KEY
 from config.setup import coins, near_percentage
 
+
 class DCACog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -22,20 +23,22 @@ class DCACog(commands.Cog):
             # Generate the DCA response
             response = await self.generate_dca_response()
             # Split the response into lines
-            lines = response.split('\n')
+            lines = response.split("\n")
             # Iterate over the lines
             for i in range(2, len(lines)):
                 # Check if ' Hit a ' is in the line
-                if ' Hit a ' in lines[i]:
+                if " Hit a " in lines[i]:
                     # Get the coin and the signal
-                    coin, signal = lines[i].split(' Hit a ')
+                    coin, signal = lines[i].split(" Hit a ")
                     # If the signal is different from the last one, send it
                     if self.last_signals.get(coin) != signal:
                         # Create an embed message
                         embed = disnake.Embed(
                             title=f"Signal for {coin}",
                             description=f"{coin} has hit a {signal}",
-                            color=disnake.Color.green() if 'DCA Level' in signal else disnake.Color.red()
+                            color=disnake.Color.green()
+                            if "DCA Level" in signal
+                            else disnake.Color.red(),
                         )
                         await channel.send(embed=embed)
                         # Update the last signal
@@ -47,7 +50,9 @@ class DCACog(commands.Cog):
         await ctx.response.defer()
         # Then do the slow operations
         response = await self.generate_dca_response()
-        embed = disnake.Embed(title="Levels Update", description=response, color=disnake.Color.blue())
+        embed = disnake.Embed(
+            title="Levels Update", description=response, color=disnake.Color.blue()
+        )
         # Edit the deferred response
         await ctx.edit_original_message(embed=embed)
 
@@ -58,14 +63,13 @@ class DCACog(commands.Cog):
             "Accepts": "application/json",
             "X-CMC_PRO_API_KEY": CMC_API_KEY,
         }
-        parameters = {
-            "symbol": ','.join(coins),
-            "convert": "USD"
-        }
+        parameters = {"symbol": ",".join(coins), "convert": "USD"}
         try:
             response = requests.get(url, headers=headers, params=parameters)
-            data = response.json()['data']
-            prices = {coin: float(data[coin]['quote']['USD']['price']) for coin in coins}
+            data = response.json()["data"]
+            prices = {
+                coin: float(data[coin]["quote"]["USD"]["price"]) for coin in coins
+            }
             return prices
         except Exception as e:
             return None
@@ -75,7 +79,11 @@ class DCACog(commands.Cog):
         level_hits = {}
         for level_type, level_values in levels.items():
             for level in level_values:
-                if (1 - near_percentage) * level <= price <= (1 + near_percentage) * level:
+                if (
+                    (1 - near_percentage) * level
+                    <= price
+                    <= (1 + near_percentage) * level
+                ):
                     level_hits[level_type] = level
         return level_hits if level_hits else None
 
@@ -96,12 +104,12 @@ class DCACog(commands.Cog):
 
                         # Check which level was hit and add to the appropriate dictionary
                         if result:
-                            if 'DCA' in result:
-                                dca_hits[coin] = result['DCA']
-                            if 'Target' in result:
-                                target_hits[coin] = result['Target']
-                            if 'BullRunTarget' in result:
-                                bullrun_hits[coin] = result['BullRunTarget']
+                            if "DCA" in result:
+                                dca_hits[coin] = result["DCA"]
+                            if "Target" in result:
+                                target_hits[coin] = result["Target"]
+                            if "BullRunTarget" in result:
+                                bullrun_hits[coin] = result["BullRunTarget"]
 
             # Add DCA hits to the response
             response = ""
@@ -125,6 +133,7 @@ class DCACog(commands.Cog):
             return response
         except Exception as e:
             return None
+
 
 def setup(bot):
     bot.add_cog(DCACog(bot))
