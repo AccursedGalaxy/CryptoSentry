@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 
 
 class Help(commands.Cog):
@@ -8,8 +8,8 @@ class Help(commands.Cog):
 
     @commands.command()
     async def help(self, ctx):
-        embed = discord.Embed(
-            title="Help", description="Commands for the bot", color=discord.Color.blue()
+        embed = disnake.Embed(
+            title="Help", description="Commands for the bot", color=disnake.Color.blue()
         )
         embed.add_field(
             name="dca", value="Get coins that are near a level.", inline=False
@@ -18,10 +18,10 @@ class Help(commands.Cog):
         embed.add_field(name="help", value="Get this message.", inline=False)
 
         # add another embed for information about the server
-        embed2 = discord.Embed(
+        embed2 = disnake.Embed(
             title="Server Information",
             description="Information about the server",
-            color=discord.Color.blue(),
+            color=disnake.Color.blue(),
         )
         embed2.add_field(name="Server Name", value=ctx.guild.name, inline=False)
         embed2.add_field(name="Server Owner", value=ctx.guild.owner, inline=False)
