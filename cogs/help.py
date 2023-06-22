@@ -9,12 +9,13 @@ class Help(commands.Cog):
     @commands.slash_command(description="Display the help message.")
     async def help(self, ctx):
         embed = disnake.Embed(
-            title="Help", description="Commands for the bot", color=disnake.Color.blue()
+            title="Help",
+            description="Commands for the bot. You can use commands by typing / followed by the comamnd.",
+            color=disnake.Color.blue(),
         )
         embed.add_field(
             name="dca", value="Get coins that are near a level.", inline=False
         )
-        embed.add_field(name="ping", value="Get the bot's latency.", inline=False)
         embed.add_field(name="help", value="Get this message.", inline=False)
 
         # add another embed for information about the server
